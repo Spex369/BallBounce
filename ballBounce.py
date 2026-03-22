@@ -37,7 +37,7 @@ def reflect(surfaceVector, point):
     px, py = math.cos(angle), math.sin(angle)
     dot = px * sx + py * sy
 
-    return (( - py*(dot)), ( - px*(dot)))
+    return ((py - 2*py*(dot)), (px - 2*px*(dot)))
 
 # Main --------------------------------------------------------------------------------
 
@@ -62,41 +62,27 @@ while True:
             pass
 
     nextPos = (x + math.cos(angle)*v*dt, y + math.sin(angle)*v*dt)
-    #if theta:
-    #    if nextPos[0] > wallRight.x(nextPos[1]):
-    #        v[0], v[1] = reflect(wallRight.normal, (math.cos(angle)*v, v))
-    #    elif nextPos[0] < wallLeft.x(nextPos[1]):
-    #        v[0], v[1] = reflect(wallLeft.normal, (math.cos(angle)*v, v))
 
-    #    elif nextPos[1] > wallTop.y(nextPos[0]):
-    #        v[0], v[1] = reflect(wallTop.normal, (math.cos(angle)*v, v))
-    #    elif nextPos[1] < wallBottom.y(nextPos[0]):
-    #        v[0], v[1] = reflect(wallBottom.normal, (math.cos(angle)*v, v))
-
-    #    else:
-    #        y += v*dt
-    #        x += math.cos(angle)*v*dt
-    #else:
     if 100 > nextPos[0]:
-        o, a = reflect(wallLeft.normal, (math.cos(angle)*v, v))
+        o, a = reflect(wallLeft.normal, (math.cos(angle)*v, math.sin(angle)*v))
         angle = math.atan(o/ a)
+
     elif 500 < nextPos[0]:
-        o, a = reflect(reflect(wallRight.normal, (math.cos(angle)*v, v)))
+        o, a = reflect(wallRight.normal, (math.cos(angle)*v, math.sin(angle)*v))
         angle = math.atan(o/ a)
 
     elif 500 < nextPos[1]:
-        print(reflect(wallBottom.normal, (math.cos(angle)*v, v)))
-        print(wallBottom.normal)
-        o, a = reflect(wallBottom.normal, (math.cos(angle)*v, v))
+        o, a = reflect(wallBottom.normal, (math.cos(angle)*v, math.sin(angle)*v))
         angle = math.atan(o/ a)
-        
-        print()
+
     elif 100 > nextPos[1]:
-        o, a = reflect(reflect(wallTop.normal, (math.cos(angle)*v, v)))
+        o, a = reflect(wallTop.normal, (math.cos(angle)*v, math.sin(angle)*v))
         angle = math.atan(o/ a)
+
     else:
         y += math.sin(angle)*v*dt
         x += math.cos(angle)*v*dt
+
     pygame.draw.circle(screen, 'red', (x, y), 10)
 
     pygame.draw.line(screen, 'green', wallTop.p_start, wallTop.p_end, 5)
