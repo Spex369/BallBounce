@@ -5,6 +5,7 @@ import random
 pygame.init()
 
 WIDTH, HEIGHT = 612, 612
+walls = {}
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 x, y = (WIDTH//2, HEIGHT//2)
@@ -32,26 +33,26 @@ class Wall:
 def reflect(surfaceVector, point):
     sx = surfaceVector[0]
     sy = surfaceVector[1]
-    angle = math.atan2(point[1], point[0])
 
-    px, py = math.cos(angle), math.sin(angle)
+    px, py = point[0], point[1]
     dot = px * sx + py * sy
 
-    return ((py - 2*py*(dot)), (px - 2*px*(dot)))
+    return ((px - 2*px*(dot)), (py - 2*py*(dot)))
 
 # Main --------------------------------------------------------------------------------
 
-theta = 0
+theta = 0.6
 size = 400  # width | height
-x_center = (WIDTH - ((size)*math.cos(theta)+(size)*math.cos(theta+math.pi/2)))//2
-y_center = (WIDTH - ((size)*math.sin(theta)+(size)*math.sin(theta+math.pi/2)))//2
 
-wallTop = Wall((x_center, y_center), ((size)*math.cos(theta) + x_center, (size)*math.sin(theta) + y_center))
-wallLeft = Wall((x_center, y_center), ((size)*math.cos(theta+math.pi/2) + x_center, (size)*math.sin(theta+math.pi/2) + y_center))
-wallRight = Wall((wallTop.p_end[0], wallTop.p_end[1]), (wallTop.p_end[0] + wallLeft.p_end[0] - x_center, wallTop.p_end[1] + wallLeft.p_end[1] - y_center))
-wallBottom = Wall((wallLeft.p_end[0], wallLeft.p_end[1]), (wallLeft.p_end[0] + wallTop.p_end[0] - x_center, wallLeft.p_end[1] + wallTop.p_end[1] - y_center))
+
 while True:
-    dt = 0.6
+    x_center = (WIDTH - ((size)*math.cos(theta)+(size)*math.cos(theta+math.pi/2)))//2
+    y_center = (WIDTH - ((size)*math.sin(theta)+(size)*math.sin(theta+math.pi/2)))//2
+    walls.update({"0" : Wall((x_center, y_center), ((size)*math.cos(theta) + x_center, (size)*math.sin(theta) + y_center))})
+    walls.update({"1" : Wall((x_center, y_center), ((size)*math.cos(theta+math.pi/2) + x_center, (size)*math.sin(theta+math.pi/2) + y_center))})
+    walls.update({"2" : Wall((walls.get("0").p_end[0], walls.get("0").p_end[1]), (walls.get("0").p_end[0] + walls.get("1").p_end[0] - x_center, walls.get("0").p_end[1] + walls.get("1").p_end[1] - y_center))})
+    walls.update({"3" : Wall((walls.get("1").p_end[0], walls.get("1").p_end[1]), (walls.get("0").p_end[0] + walls.get("1").p_end[0] - x_center, walls.get("0").p_end[1] + walls.get("1").p_end[1] - y_center))})
+    dt = 3
     screen.fill("black")
     frameTime = pygame.time.get_ticks()
 
@@ -60,35 +61,14 @@ while True:
             pygame.quit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pass
-
-    nextPos = (x + math.cos(angle)*v*dt, y + math.sin(angle)*v*dt)
-
-    if 100 > nextPos[0]:
-        o, a = reflect(wallLeft.normal, (math.cos(angle)*v, math.sin(angle)*v))
-        angle = math.atan(o/ a)
-
-    elif 500 < nextPos[0]:
-        o, a = reflect(wallRight.normal, (math.cos(angle)*v, math.sin(angle)*v))
-        angle = math.atan(o/ a)
-
-    elif 500 < nextPos[1]:
-        o, a = reflect(wallBottom.normal, (math.cos(angle)*v, math.sin(angle)*v))
-        angle = math.atan(o/ a)
-
-    elif 100 > nextPos[1]:
-        o, a = reflect(wallTop.normal, (math.cos(angle)*v, math.sin(angle)*v))
-        angle = math.atan(o/ a)
-
-    else:
-        y += math.sin(angle)*v*dt
-        x += math.cos(angle)*v*dt
+        elif event.type ==pygame.MOUSEMOTION:
+            theta = pygame.mouse.get_pos()[1] / 100
 
     pygame.draw.circle(screen, 'red', (x, y), 10)
 
-    pygame.draw.line(screen, 'green', wallTop.p_start, wallTop.p_end, 5)
-    pygame.draw.line(screen, 'green', wallLeft.p_start, wallLeft.p_end, 5)
-    pygame.draw.line(screen, 'green', wallRight.p_start, wallRight.p_end, 5)
-    pygame.draw.line(screen, 'green', wallBottom.p_start, wallBottom.p_end, 5)
+    for i in range(4):
+        i = str(i)
+        pygame.draw.line(screen, 'green', walls.get(i).p_start, walls.get(i).p_end, 5)
 
     pygame.display.update()
     clock.tick(60)
