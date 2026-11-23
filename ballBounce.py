@@ -11,18 +11,11 @@ r = [WIDTH//2, HEIGHT//2]
 v = [0, 0]
 radius = 10
 theta = 0
-ball = False
 
 squareTheta = math.pi/2 # under pi/2 and over -pi/2 non inclusive
-halfDiagSquare = 250
-
 dt = 0.5
 
-p1 = (WIDTH//2 + halfDiagSquare*math.cos(squareTheta), HEIGHT//2 - halfDiagSquare*math.sin(squareTheta))
-p2 = (WIDTH//2 + halfDiagSquare*math.cos(squareTheta+math.pi/2), HEIGHT//2 - halfDiagSquare*math.sin(squareTheta+math.pi/2))
-p3 = (WIDTH//2 + halfDiagSquare*math.cos(squareTheta+math.pi), HEIGHT//2 - halfDiagSquare*math.sin(squareTheta+math.pi))
-p4 = (WIDTH//2 + halfDiagSquare*math.cos(squareTheta+3*math.pi/2), HEIGHT//2 - halfDiagSquare*math.sin(squareTheta+3*math.pi/2))
-
+walls = {}
 
 # Classes --------------------------------------------------------------------------------
 
@@ -37,11 +30,29 @@ class wall:
 
 
 # Subprogram -----------------------------------------------------------------------------
+
 def dot(pointX, pointY, vecX, vecY):
     return pointX*vecX + pointY*vecY
+
+def createWalls():
+    n = random.randint(3, 20)
+    points = []
+
+    for i in range(n):
+        r = random.randint(100, WIDTH//2)
+        thisPoint = (WIDTH//2 + r*math.cos(squareTheta+2*i*math.pi/n), HEIGHT//2 - r*math.sin(squareTheta+2*i*math.pi/n))
+        while thisPoint in points:
+            thisPoint = (WIDTH//2 + r*math.cos(squareTheta+2*i*math.pi/n), HEIGHT//2 - r*math.sin(squareTheta+2*i*math.pi/n))
+        points.append(thisPoint)
+
+    for i in range(1, len(points)):
+        walls.update({i: wall(points[i - 1], points[i])})
+    walls.update({len(points): wall(points[-1], points[0])})
+
+    
 # Main -----------------------------------------------------------------------------------
 
-walls = {1: wall(p1, p2), 2: wall(p2, p3), 3: wall(p3, p4), 4:wall(p4, p1)}
+createWalls()
 
 while True:
     screen.fill("black")
@@ -50,17 +61,11 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if not ball:
-                r = (pygame.mouse.get_pos())
-                theta = random.uniform(-math.pi, math.pi)
-                v = [10*math.cos(theta), -10*math.sin(theta)]
-                ball = True
-            else:
-                mid = pygame.math.Vector2(pygame.mouse.get_pos())
-                theta = random.uniform(-math.pi, math.pi)
-                halfWall = pygame.math.Vector2(50*math.cos(theta), -50*math.sin(theta))
-                walls.update({len(walls)+1: wall(mid - halfWall, mid + halfWall)})
+            r = (pygame.mouse.get_pos())
+            theta = random.uniform(-math.pi, math.pi)
+            v = [10*math.cos(theta), -10*math.sin(theta)]
 
     r = [r[0] + dt*v[0], r[1] + dt*v[1]]
 
