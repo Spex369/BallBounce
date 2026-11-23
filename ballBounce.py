@@ -4,71 +4,99 @@ import random
 
 pygame.init()
 
-WIDTH, HEIGHT = 612, 612
-walls = {}
+WIDTH, HEIGHT = 512, 512
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-x, y = (WIDTH//2, HEIGHT//2)
-angle = random.random() * 2 * math.pi
-v = 2
+r = [WIDTH//2, HEIGHT//2]
+v = [0, 0]
+radius = 10
+theta = 0
+ball = False
+
+squareTheta = math.pi/2 # under pi/2 and over -pi/2 non inclusive
+halfDiagSquare = 250
+
+dt = 0.5
+
+p1 = (WIDTH//2 + halfDiagSquare*math.cos(squareTheta), HEIGHT//2 - halfDiagSquare*math.sin(squareTheta))
+p2 = (WIDTH//2 + halfDiagSquare*math.cos(squareTheta+math.pi/2), HEIGHT//2 - halfDiagSquare*math.sin(squareTheta+math.pi/2))
+p3 = (WIDTH//2 + halfDiagSquare*math.cos(squareTheta+math.pi), HEIGHT//2 - halfDiagSquare*math.sin(squareTheta+math.pi))
+p4 = (WIDTH//2 + halfDiagSquare*math.cos(squareTheta+3*math.pi/2), HEIGHT//2 - halfDiagSquare*math.sin(squareTheta+3*math.pi/2))
+
 
 # Classes --------------------------------------------------------------------------------
 
-class Wall:
-    def __init__(self, pStart, pEnd):
-        self.p_start = pStart
-        self.p_end = pEnd
-        self.angle = math.atan2((-1 * (self.p_start[0]- self.p_end[0])), (self.p_start[1] - self.p_end[1]))
-        self.normal = (math.cos(theta), math.sin(theta))
+class wall:
+    def __init__(self, start, end):
+        self.start = pygame.math.Vector2(start)
+        self.end = pygame.math.Vector2(end)
+        self.WallVector =  (self.end - self.start)
+        self.length = self.WallVector.length()
+        self.WallVector = self.WallVector.normalize()
+        self.normal = pygame.math.Vector2(-self.WallVector.y, self.WallVector.x).normalize()
 
-    def x(self, y):
-        return (y/math.tan(theta))
-    
-    def y(self, x):
-        return (x*math.tan(theta))
-    
 
-# Subprogram --------------------------------------------------------------------------------
+# Subprogram -----------------------------------------------------------------------------
+def dot(pointX, pointY, vecX, vecY):
+    return pointX*vecX + pointY*vecY
+# Main -----------------------------------------------------------------------------------
 
-def reflect(surfaceVector, point):
-    sx = surfaceVector[0]
-    sy = surfaceVector[1]
-
-    px, py = point[0], point[1]
-    dot = px * sx + py * sy
-
-    return ((px - 2*px*(dot)), (py - 2*py*(dot)))
-
-# Main --------------------------------------------------------------------------------
-
-theta = 0.6
-size = 400  # width | height
-
+walls = {1: wall(p1, p2), 2: wall(p2, p3), 3: wall(p3, p4), 4:wall(p4, p1)}
 
 while True:
-    x_center = (WIDTH - ((size)*math.cos(theta)+(size)*math.cos(theta+math.pi/2)))//2
-    y_center = (WIDTH - ((size)*math.sin(theta)+(size)*math.sin(theta+math.pi/2)))//2
-    walls.update({"0" : Wall((x_center, y_center), ((size)*math.cos(theta) + x_center, (size)*math.sin(theta) + y_center))})
-    walls.update({"1" : Wall((x_center, y_center), ((size)*math.cos(theta+math.pi/2) + x_center, (size)*math.sin(theta+math.pi/2) + y_center))})
-    walls.update({"2" : Wall((walls.get("0").p_end[0], walls.get("0").p_end[1]), (walls.get("0").p_end[0] + walls.get("1").p_end[0] - x_center, walls.get("0").p_end[1] + walls.get("1").p_end[1] - y_center))})
-    walls.update({"3" : Wall((walls.get("1").p_end[0], walls.get("1").p_end[1]), (walls.get("0").p_end[0] + walls.get("1").p_end[0] - x_center, walls.get("0").p_end[1] + walls.get("1").p_end[1] - y_center))})
-    dt = 3
     screen.fill("black")
     frameTime = pygame.time.get_ticks()
-
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            pass
-        elif event.type ==pygame.MOUSEMOTION:
-            theta = pygame.mouse.get_pos()[1] / 100
+            if not ball:
+                r = (pygame.mouse.get_pos())
+                theta = random.uniform(-math.pi, math.pi)
+                v = [10*math.cos(theta), -10*math.sin(theta)]
+                ball = True
+            else:
+                mid = pygame.math.Vector2(pygame.mouse.get_pos())
+                theta = random.uniform(-math.pi, math.pi)
+                halfWall = pygame.math.Vector2(50*math.cos(theta), -50*math.sin(theta))
+                walls.update({len(walls)+1: wall(mid - halfWall, mid + halfWall)})
 
-    pygame.draw.circle(screen, 'red', (x, y), 10)
+    r = [r[0] + dt*v[0], r[1] + dt*v[1]]
+    
+    pygame.draw.line(screen, "white", p1, p2)
+    pygame.draw.line(screen, "white", p2, p3)
+    pygame.draw.line(screen, "white", p3, p4)
+    pygame.draw.line(screen, "white", p4, p1)
 
-    for i in range(4):
-        i = str(i)
-        pygame.draw.line(screen, 'green', walls.get(i).p_start, walls.get(i).p_end, 5)
+    pygame.draw.circle(screen, 'white', r, radius)
+
+    pygame.draw.circle(screen, "red", (p4), 5)
+    pygame.draw.circle(screen, "green", (p3), 5)
+    pygame.draw.circle(screen, "blue", (p2), 5)
+    pygame.draw.circle(screen, "yellow", (p1), 5)
+
+
+    for i in walls:
+        currentWall = walls.get(i)
+
+        pygame.draw.line(screen, "white", currentWall.start, currentWall.end)
+
+        vectorToBall = pygame.math.Vector2(r)-currentWall.start
+        projection = max(0, min(dot(vectorToBall.x, vectorToBall.y, currentWall.WallVector.x, currentWall.WallVector.y), currentWall.length)) # clamping, did that for cool graphic representation earlier in the project, otherwise useless if it all works.
+        contact = currentWall.start + currentWall.WallVector * projection # projection is how far up the wall the contact is. Hence start + direction*distance = contact.
+
+        distance = (r - contact).length()
+
+        # credits to Zanzlanz; not my code --------------------------------------------------------
+        if distance < radius:
+            magVNormal = dot(v[0], v[1], currentWall.normal.x, currentWall.normal.y)
+            magVTangent = dot(v[0], v[1], currentWall.WallVector.x, currentWall.WallVector.y)
+
+            v[0] = -(magVNormal * currentWall.normal.x) + (magVTangent * currentWall.normal.y)
+            v[1] = -(magVNormal * currentWall.normal.y) + (magVTangent * -currentWall.normal.x)
+        # credits to Zanzlanz; not my code --------------------------------------------------------
+        # Check out Zanzlanz's yt channel @zanzlanz
 
     pygame.display.update()
     clock.tick(60)
