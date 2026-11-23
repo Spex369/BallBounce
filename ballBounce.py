@@ -63,19 +63,8 @@ while True:
                 walls.update({len(walls)+1: wall(mid - halfWall, mid + halfWall)})
 
     r = [r[0] + dt*v[0], r[1] + dt*v[1]]
-    
-    pygame.draw.line(screen, "white", p1, p2)
-    pygame.draw.line(screen, "white", p2, p3)
-    pygame.draw.line(screen, "white", p3, p4)
-    pygame.draw.line(screen, "white", p4, p1)
 
     pygame.draw.circle(screen, 'white', r, radius)
-
-    pygame.draw.circle(screen, "red", (p4), 5)
-    pygame.draw.circle(screen, "green", (p3), 5)
-    pygame.draw.circle(screen, "blue", (p2), 5)
-    pygame.draw.circle(screen, "yellow", (p1), 5)
-
 
     for i in walls:
         currentWall = walls.get(i)
@@ -100,3 +89,8 @@ while True:
 
     pygame.display.update()
     clock.tick(60)
+
+# Added features: 
+#  - Removed redundant code
+#  - Handle velocitties, walls and positions using vectors
+#  - random wall addition upon mouse clicking
